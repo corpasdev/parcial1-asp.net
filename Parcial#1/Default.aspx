@@ -77,6 +77,88 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
+        /* Estilos para el indicador de progreso */
+        .progress-indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+        
+        .progress-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background-color: #e9ecef;
+            z-index: 1;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .step-label {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-circle {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            transform: scale(1.1);
+        }
+        
+        .step.active .step-label {
+            color: #007bff;
+            font-weight: bold;
+        }
+        
+        .step.completed .step-circle {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .step.completed .step-label {
+            color: #28a745;
+        }
+        
+        .step.completed .step-circle::before {
+            content: '✓';
+            font-size: 16px;
+        }
+
         /* Estilos responsive */
         @media (max-width: 768px) {
             .payment-method label {
@@ -88,6 +170,20 @@
                 width: 100%;
                 padding: 12px;
             }
+            
+            .progress-indicator {
+                padding: 0 10px;
+            }
+            
+            .step-label {
+                font-size: 10px;
+            }
+            
+            .step-circle {
+                width: 35px;
+                height: 35px;
+                font-size: 12px;
+            }
         }
     </style>
 
@@ -96,6 +192,30 @@
             <div class="col-md-12">
                 <h1>Sistema de Pedidos en Línea</h1>
                 <p class="lead">Complete el formulario para realizar su pedido</p>
+            </div>
+        </div>
+
+        <!-- Indicador de Progreso -->
+        <div class="progress-indicator mb-4">
+            <div class="step" id="step1" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Datos del Cliente</div>
+            </div>
+            <div class="step" id="step2" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Productos</div>
+            </div>
+            <div class="step" id="step3" data-step="3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Resumen</div>
+            </div>
+            <div class="step" id="step4" data-step="4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Pago</div>
+            </div>
+            <div class="step" id="step5" data-step="5">
+                <div class="step-circle">5</div>
+                <div class="step-label">Confirmación</div>
             </div>
         </div>
 
@@ -516,7 +636,7 @@
                         selector = '#collapseProductos';
                         break;
                     case 3:
-                        selector = '#collapseResumen';
+                        selector = '#collapseTotales';
                         break;
                     case 4:
                         selector = '#collapsePago';
@@ -532,7 +652,43 @@
                         var bsCollapse = new bootstrap.Collapse(acordeon, { toggle: true });
                     }
                 }
+                
+                // Actualizar el indicador visual de progreso
+                actualizarIndicadorProgreso(paso);
             }, 100);
+        }
+        
+        function actualizarIndicadorProgreso(pasoActivo) {
+            // Remover todas las clases de estado
+            var steps = document.querySelectorAll('.step');
+            steps.forEach(function(step) {
+                step.classList.remove('active', 'completed');
+            });
+            
+            // Marcar pasos completados y el paso activo
+            for (let i = 1; i <= 5; i++) {
+                const stepElement = document.getElementById('step' + i);
+                if (stepElement) {
+                    if (i < pasoActivo) {
+                        stepElement.classList.add('completed');
+                    } else if (i === pasoActivo) {
+                        stepElement.classList.add('active');
+                    }
+                }
+            }
+        }
+        
+        // Función para validar que los pasos anteriores estén completos
+        function validarPasosAnteriores(pasoDestino) {
+            var hfPasoActivo = document.getElementById('<%= hfPasoActivo.ClientID %>');
+            var pasoActual = parseInt(hfPasoActivo.value) || 1;
+            
+            // Solo permitir avanzar al siguiente paso o regresar a pasos anteriores
+            if (pasoDestino > pasoActual + 1) {
+                return false;
+            }
+            
+            return true;
         }
         
         // Función que se ejecuta cuando el DOM está completamente cargado
@@ -541,6 +697,32 @@
             if (paso) {
                 activarAcordeon(parseInt(paso));
             }
+            
+            // Agregar event listeners a los botones del acordeón para validar navegación
+            var botonesAcordeon = document.querySelectorAll('.accordion-button');
+            botonesAcordeon.forEach(function(boton, index) {
+                boton.addEventListener('click', function(e) {
+                    var pasoDestino = index + 1;
+                    if (!validarPasosAnteriores(pasoDestino)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Mostrar mensaje de advertencia
+                        var alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+                        alertDiv.innerHTML = 'Debe completar los pasos anteriores antes de continuar. <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                        
+                        var main = document.querySelector('main');
+                        main.insertBefore(alertDiv, main.firstChild);
+                        
+                        // Auto-cerrar la alerta después de 5 segundos
+                        setTimeout(function() {
+                            var alert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                            if (alert) alert.close();
+                        }, 5000);
+                    }
+                });
+            });
         });
     </script>
 </asp:Content>

@@ -22,95 +22,15 @@ namespace Parcial_1
                     Session["Carrito"] = dtCarrito;
                 }
                 
+                // Determinar el paso activo basado en el estado de la sesión
+                DeterminarPasoActivo();
+                
+                // Configurar la visibilidad de las secciones según el paso activo
+                ConfigurarVisibilidadSecciones();
+                
                 // Verificar si hay productos en el carrito para habilitar/deshabilitar el botón de calcular total
                 DataTable dt = (DataTable)Session["Carrito"];
                 btnCalcularTotal.Enabled = dt.Rows.Count > 0;
-                
-                // Verificar si los datos del cliente ya están en sesión
-                if (Session["Cedula"] != null && Session["Nombres"] != null)
-                {
-                    // Mostrar la sección de productos si los datos del cliente ya están completos
-                    seccionProductos.Visible = true;
-                    
-                    // Rellenar los campos del cliente con los datos de la sesión
-                    txtCedula.Text = Session["Cedula"].ToString();
-                    txtNombres.Text = Session["Nombres"].ToString();
-                    txtTelefono.Text = Session["Telefono"].ToString();
-                    txtEmail.Text = Session["Email"].ToString();
-                    txtDireccionEnvio.Text = Session["DireccionEnvio"].ToString();
-                    
-                    // Verificar si hay totales calculados en la sesión
-                    if (Session["Total"] != null)
-                    {
-                        // Mostrar la sección de totales
-                        seccionTotales.Visible = true;
-                        
-                        // Mostrar los totales guardados
-                        lblSubtotal.Text = string.Format("${0:N2}", Session["Subtotal"]);
-                        lblImpuestos.Text = string.Format("${0:N2}", Session["Impuestos"]);
-                        lblTotal.Text = string.Format("${0:N2}", Session["Total"]);
-                        
-                        // Actualizar el GridView de resumen de productos
-            if (Session["Carrito"] != null)
-            {
-                DataTable dtResumen = (DataTable)Session["Carrito"];
-                GridView gvResumen = (GridView)seccionTotales.FindControl("gvResumenProductos");
-                if (gvResumen != null)
-                {
-                    gvResumen.DataSource = dtResumen;
-                    gvResumen.DataBind();
-                }
-                else
-                {
-                    // Si no se encuentra dentro de seccionTotales, buscar en toda la página
-                    gvResumen = (GridView)Page.FindControl("gvResumenProductos");
-                    if (gvResumen != null)
-                    {
-                        gvResumen.DataSource = dtResumen;
-                        gvResumen.DataBind();
-                    }
-                }
-            }
-                        
-                        // Verificar si hay método de pago seleccionado
-                        if (Session["MetodoPago"] != null)
-                        {
-                            // Mostrar la sección de pago
-                            seccionPago.Visible = true;
-                            rblMetodoPago.SelectedValue = Session["MetodoPago"].ToString();
-                            
-                            // Inicializar los paneles de pago según el método seleccionado
-                            string metodoPago = Session["MetodoPago"].ToString();
-                            pnlDatosTarjeta.Visible = (metodoPago == "Debito" || metodoPago == "Credito");
-                            pnlDatosPayPal.Visible = (metodoPago == "PayPal");
-                            
-                            // Verificar si se completó el proceso
-                            if (Session["PedidoCompletado"] != null && (bool)Session["PedidoCompletado"])
-                            {
-                                // Mostrar la sección de confirmación
-                                seccionConfirmacion.Visible = true;
-                                
-                                // Establecer el paso activo en el HiddenField
-                                hfPasoActivo.Value = "5";
-                            }
-                            else
-                            {
-                                // Establecer el paso activo en el HiddenField
-                                hfPasoActivo.Value = "4";
-                            }
-                        }
-                        else
-                        {
-                            // Establecer el paso activo en el HiddenField
-                            hfPasoActivo.Value = "3";
-                        }
-                    }
-                    else
-                    {
-                        // Establecer el paso activo en el HiddenField
-                        hfPasoActivo.Value = "2";
-                    }
-                }
             }
             else
             {
@@ -122,6 +42,141 @@ namespace Parcial_1
                     pnlDatosTarjeta.Visible = (metodoPago == "Debito" || metodoPago == "Credito");
                     pnlDatosPayPal.Visible = (metodoPago == "PayPal");
                 }
+            }
+        }
+        
+        private void DeterminarPasoActivo()
+        {
+            int pasoActivo = 1; // Por defecto, comenzar en el paso 1
+            
+            // Verificar si los datos del cliente están completos
+            if (Session["Cedula"] != null && Session["Nombres"] != null && 
+                Session["Telefono"] != null && Session["Email"] != null && 
+                Session["DireccionEnvio"] != null)
+            {
+                pasoActivo = 2; // Avanzar al paso de productos
+                
+                // Verificar si hay totales calculados
+                if (Session["Total"] != null)
+                {
+                    pasoActivo = 3; // Avanzar al paso de resumen
+                    
+                    // Verificar si hay método de pago seleccionado
+                    if (Session["MetodoPago"] != null)
+                    {
+                        pasoActivo = 4; // Avanzar al paso de pago
+                        
+                        // Verificar si el pedido está completado
+                        if (Session["PedidoCompletado"] != null && (bool)Session["PedidoCompletado"])
+                        {
+                            pasoActivo = 5; // Avanzar al paso de confirmación
+                        }
+                    }
+                }
+            }
+            
+            hfPasoActivo.Value = pasoActivo.ToString();
+        }
+        
+        private void ConfigurarVisibilidadSecciones()
+        {
+            int pasoActivo = int.Parse(hfPasoActivo.Value);
+            
+            // Configurar visibilidad de secciones según el paso activo
+            seccionProductos.Visible = pasoActivo >= 2;
+            seccionTotales.Visible = pasoActivo >= 3;
+            seccionPago.Visible = pasoActivo >= 4;
+            seccionConfirmacion.Visible = pasoActivo >= 5;
+            
+            // Rellenar campos si hay datos en sesión
+            if (pasoActivo >= 2 && Session["Cedula"] != null)
+            {
+                txtCedula.Text = Session["Cedula"].ToString();
+                txtNombres.Text = Session["Nombres"].ToString();
+                txtTelefono.Text = Session["Telefono"].ToString();
+                txtEmail.Text = Session["Email"].ToString();
+                txtDireccionEnvio.Text = Session["DireccionEnvio"].ToString();
+            }
+            
+            // Mostrar totales si están calculados
+            if (pasoActivo >= 3 && Session["Total"] != null)
+            {
+                lblSubtotal.Text = string.Format("${0:N2}", Session["Subtotal"]);
+                lblImpuestos.Text = string.Format("${0:N2}", Session["Impuestos"]);
+                lblTotal.Text = string.Format("${0:N2}", Session["Total"]);
+                
+                // Actualizar el GridView de resumen de productos
+                if (Session["Carrito"] != null)
+                {
+                    DataTable dtResumen = (DataTable)Session["Carrito"];
+                    GridView gvResumen = (GridView)seccionTotales.FindControl("gvResumenProductos");
+                    if (gvResumen != null)
+                    {
+                        gvResumen.DataSource = dtResumen;
+                        gvResumen.DataBind();
+                    }
+                    else
+                    {
+                        // Si no se encuentra dentro de seccionTotales, buscar en toda la página
+                        gvResumen = (GridView)Page.FindControl("gvResumenProductos");
+                        if (gvResumen != null)
+                        {
+                            gvResumen.DataSource = dtResumen;
+                            gvResumen.DataBind();
+                        }
+                    }
+                }
+            }
+            
+            // Configurar método de pago si está seleccionado
+            if (pasoActivo >= 4 && Session["MetodoPago"] != null)
+            {
+                rblMetodoPago.SelectedValue = Session["MetodoPago"].ToString();
+                
+                // Inicializar los paneles de pago según el método seleccionado
+                string metodoPago = Session["MetodoPago"].ToString();
+                pnlDatosTarjeta.Visible = (metodoPago == "Debito" || metodoPago == "Credito");
+                pnlDatosPayPal.Visible = (metodoPago == "PayPal");
+            }
+        }
+        
+        /// <summary>
+        /// Actualiza el paso activo y ejecuta el script JavaScript para activar el acordeón correspondiente
+        /// </summary>
+        /// <param name="nuevoPaso">Número del paso a activar (1-5)</param>
+        private void ActualizarPasoActivo(int nuevoPaso)
+        {
+            hfPasoActivo.Value = nuevoPaso.ToString();
+            
+            // Ejecutar script JavaScript para activar el acordeón correspondiente
+            string script = $"activarAcordeon({nuevoPaso});";
+            ClientScript.RegisterStartupScript(this.GetType(), "ActivarAcordeon", script, true);
+        }
+        
+        /// <summary>
+        /// Verifica si se puede avanzar al siguiente paso basado en el estado actual de la sesión
+        /// </summary>
+        /// <param name="pasoDestino">Paso al que se quiere avanzar</param>
+        /// <returns>True si se puede avanzar, False en caso contrario</returns>
+        private bool PuedeAvanzarAPaso(int pasoDestino)
+        {
+            switch (pasoDestino)
+            {
+                case 1:
+                    return true; // Siempre se puede volver al paso 1
+                case 2:
+                    return Session["Cedula"] != null && Session["Nombres"] != null && 
+                           Session["Telefono"] != null && Session["Email"] != null && 
+                           Session["DireccionEnvio"] != null;
+                case 3:
+                    return PuedeAvanzarAPaso(2) && Session["Carrito"] != null && 
+                           ((DataTable)Session["Carrito"]).Rows.Count > 0;
+                case 4:
+                    return PuedeAvanzarAPaso(3) && Session["Total"] != null;
+                case 5:
+                    return PuedeAvanzarAPaso(4) && Session["MetodoPago"] != null;
+                default:
+                    return false;
             }
         }
 
@@ -201,11 +256,8 @@ namespace Parcial_1
                 // Mostrar la sección de productos
                 seccionProductos.Visible = true;
                 
-                // Establecer el paso activo en el HiddenField
-                hfPasoActivo.Value = "2";
-                
-                // Ya no es necesario usar RegisterStartupScript porque el evento DOMContentLoaded
-                // detectará el valor del HiddenField y activará el acordeón correspondiente
+                // Actualizar el paso activo usando el método centralizado
+                ActualizarPasoActivo(2);
             }
         }
 
@@ -273,8 +325,8 @@ namespace Parcial_1
                 // Deshabilitar el botón después de agregar al carrito
                 btnAgregarProducto.Enabled = false;
                 
-                // Establecer el paso activo en el HiddenField
-                hfPasoActivo.Value = "2";
+                // Actualizar el paso activo usando el método centralizado
+                ActualizarPasoActivo(2);
             }
         }
 
@@ -290,8 +342,8 @@ namespace Parcial_1
                 // Actualizar el grid y el estado del botón de calcular total
                 ActualizarGridProductos();
                 
-                // Establecer el paso activo en el HiddenField
-                hfPasoActivo.Value = "2";
+                // Actualizar el paso activo usando el método centralizado
+                ActualizarPasoActivo(2);
             }
         }
 
@@ -337,8 +389,8 @@ namespace Parcial_1
                     // Mostrar la sección de totales
                     seccionTotales.Visible = true;
                     
-                    // Establecer el paso activo en el HiddenField
-                    hfPasoActivo.Value = "3";
+                    // Actualizar el paso activo usando el método centralizado
+                    ActualizarPasoActivo(3);
                 }
                 else
                 {
@@ -371,8 +423,8 @@ namespace Parcial_1
                 // Mostrar la sección de pago
                 seccionPago.Visible = true;
                 
-                // Establecer el paso activo en el HiddenField
-                hfPasoActivo.Value = "4";
+                // Actualizar el paso activo usando el método centralizado
+                ActualizarPasoActivo(4);
             }
         }
 
@@ -394,8 +446,8 @@ namespace Parcial_1
                 pnlDatosPayPal.Visible = true;
             }
             
-            // Establecer el paso activo en el HiddenField
-            hfPasoActivo.Value = "4";
+            // Actualizar el paso activo usando el método centralizado
+            ActualizarPasoActivo(4);
         }
 
         protected void btnProcesar_Click(object sender, EventArgs e)
@@ -405,7 +457,7 @@ namespace Parcial_1
             if ((metodoPago == "Debito" || metodoPago == "Credito") && !ValidarDatosTarjeta())
             {
                 // Si la validación falla, mantener el acordeón de pago abierto
-                hfPasoActivo.Value = "4";
+                ActualizarPasoActivo(4);
                 return; // No continuar si la validación falla
             }
             
@@ -421,8 +473,8 @@ namespace Parcial_1
             // Mostrar la sección de confirmación
             seccionConfirmacion.Visible = true;
             
-            // Establecer el paso activo en el HiddenField
-            hfPasoActivo.Value = "5";
+            // Actualizar el paso activo usando el método centralizado
+            ActualizarPasoActivo(5);
         }
         
         private bool ValidarDatosTarjeta()
@@ -472,6 +524,9 @@ namespace Parcial_1
             seccionTotales.Visible = false;
             seccionPago.Visible = false;
             seccionConfirmacion.Visible = false;
+            
+            // Actualizar el paso activo usando el método centralizado
+            ActualizarPasoActivo(1);
         }
 
         protected void ValidarCedula(object source, ServerValidateEventArgs args)
