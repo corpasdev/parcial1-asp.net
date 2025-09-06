@@ -1,0 +1,181 @@
+/* Estilos para la sección de pago */
+.payment-method {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.payment-method input[type="radio"] {
+    margin-right: 10px;
+}
+
+.payment-method label {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.payment-method label:hover {
+    background-color: #e9ecef;
+}
+
+.payment-method input[type="radio"]:checked + label {
+    background-color: #e9ecef;
+    border-color: #007bff;
+}
+
+/* Estilos para los campos de tarjeta */
+#pnlDatosTarjeta {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+#pnlDatosTarjeta h4 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+/* Estilos para el panel de PayPal */
+#pnlDatosPayPal .alert-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#pnlDatosPayPal .bi-info-circle {
+    font-size: 1.2rem;
+    color: #0dcaf0;
+}
+
+/* Estilos para el botón de procesar compra */
+#btnProcesar {
+    background-color: #28a745;
+    border-color: #28a745;
+    padding: 10px 20px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#btnProcesar:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Estilos para el indicador de progreso */
+.progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    margin: 20px 0;
+    padding: 0 20px;
+}
+
+.progress-indicator::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background-color: #e9ecef;
+    z-index: 1;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.step-label {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6c757d;
+    text-align: center;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-circle {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    transform: scale(1.1);
+}
+
+.step.active .step-label {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.step.completed .step-circle {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.step.completed .step-label {
+    color: #28a745;
+}
+
+.step.completed .step-circle::before {
+    content: '✓';
+    font-size: 16px;
+}
+
+/* Estilos responsive */
+@media (max-width: 768px) {
+    .payment-method label {
+        padding: 15px;
+        font-size: 1rem;
+    }
+    
+    #btnProcesar {
+        width: 100%;
+        padding: 12px;
+    }
+    
+    .progress-indicator {
+        padding: 0 10px;
+    }
+    
+    .step-label {
+        font-size: 10px;
+    }
+    
+    .step-circle {
+        width: 35px;
+        height: 35px;
+        font-size: 12px;
+    }
+}
